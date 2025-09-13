@@ -1,0 +1,12 @@
+# HEROKU CONFIG VARS TO ADD:
+
+KEY: SECRET_KEY
+VALUE: django-insecure-y#77%399dcbrd0jmnw#!60bl=f-iibe)=_kh-lklf=m_ptjn$)
+
+KEY: DEBUG
+VALUE: False
+
+KEY: ALLOWED_HOSTS
+VALUE: mini-100prosim-energy.herokuapp.com
+
+# Note: Replace 'mini-100prosim-energy' with your actual app name if different

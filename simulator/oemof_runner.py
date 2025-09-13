@@ -29,8 +29,28 @@ def run_oemof_scenario():
         elif value.id.startswith('Snk_'):
             total_sinks_before += value.value
 
-    # Solve model
-    model.solve(solver="cbc")
+    # Solve model using best available solver for Heroku deployment
+    import os
+    is_heroku = 'DYNO' in os.environ  # Heroku sets this environment variable
+    
+    try:
+        if is_heroku:
+            # On Heroku, try solvers that don't need system executables
+            try:
+                model.solve(solver="appsi_highs")  # HiGHS via appsi interface
+            except:
+                model.solve(solver="glpk")  # GLPK fallback
+        else:
+            # Local development - prefer CBC if available
+            model.solve(solver="cbc")
+    except Exception as e:
+        print(f"Primary solver failed: {e}")
+        # Final fallback to any available solver
+        try:
+            model.solve()  # Let OEMOF choose the best available solver
+        except Exception as e2:
+            print(f"All solvers failed: {e2}")
+            raise Exception("No suitable solver found for optimization")
 
     # Get results
     results = processing.results(model)
