@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mini-100ProSim - Results</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://d3js.org/d3.          <!-- Summary Table -->
+          <div class="result-card"></script>
+  <script src="https://unpkg.com/d3-sankey@0.12/dist/d3-sankey.min.js"></script>
+  <style>
+    .sidebar {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: white;
+    }
+    .sidebar-item {
+      padding: 15px 20px;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      transition: all 0.3s ease;
+    }
+    .sidebar-item:hover {
+      background: rgba(255,255,255,0.1);
+      transform: translateX(5px);
+    }
+    .sidebar-item.active {
+      background: rgba(255,255,255,0.2);
+      border-left: 4px solid #fff;
+    }
+    .content-area {
+      background: #f8f9fa;
+      min-height: 100vh;
+      padding: 30px;
+    }
+    .result-card {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+      padding: 30px;
+      margin-bottom: 20px;
+      border: none;
+    }
+    .chart-container {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+      padding: 30px;
+      margin-bottom: 20px;
+      height: 400px;
+    }
+    .metric-summary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .metric-summary h4 {
+      margin: 0;
+      font-size: 2.5em;
+      font-weight: bold;
+    }
+    .metric-summary p {
+      margin: 5px 0 0 0;
+      opacity: 0.9;
+    }
+    .verification-badge {
+      background: linear-gradient(45deg, #28a745, #20c997);
+      color: white;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.9em;
+    }
+    .section-title {
+      color: #2c3e50;
+      border-bottom: 3px solid #667eea;
+      padding-bottom: 10px;
+      margin-bottom: 25px;
+    }
+    .icon-circle {
+      width: 40px;
+      height: 40px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 15px;
+    }
+    .text-purple {
+      color: #9c27b0 !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="container-fluid p-0">
+    <div class="row g-0">
+      
+      <!-- Sidebar Navigation -->
+      <div class="col-md-3 sidebar">
+        <div class="p-4">
+          <h4 class="mb-4"><i class="bi bi-graph-up"></i> Results Explorer</h4>
+        </div>
+        
+        <div class="sidebar-item active" onclick="showSection('before')" id="nav-before">
+          <div class="d-flex align-items-center">
+            <div class="icon-circle">
+              <i class="bi bi-play-circle"></i>
+            </div>
+            <div>
+              <div class="fw-bold">Before Optimization</div>
+              <small class="opacity-75">Initial Energy Balance</small>
+            </div>
+          </div>
+        </div>
+        
+        <div class="sidebar-item" onclick="showSection('after')" id="nav-after">
+          <div class="d-flex align-items-center">
+            <div class="icon-circle">
+              <i class="bi bi-check-circle"></i>
+            </div>
+            <div>
+              <div class="fw-bold">After Optimization</div>
+              <small class="opacity-75">Optimized Results</small>
+            </div>
+          </div>
+        </div>
+        
+        <div class="sidebar-item" onclick="showSection('detailed')" id="nav-detailed">
+          <div class="d-flex align-items-center">
+            <div class="icon-circle">
+              <i class="bi bi-list-ul"></i>
+            </div>
+            <div>
+              <div class="fw-bold">Detailed Breakdown</div>
+              <small class="opacity-75">Individual Components</small>
+            </div>
+          </div>
+        </div>
+        
+        <div class="sidebar-item" onclick="showSection('losses')" id="nav-losses">
+          <div class="d-flex align-items-center">
+            <div class="icon-circle">
+              <i class="bi bi-diagram-2"></i>
+            </div>
+            <div>
+              <div class="fw-bold">Energy Conversion Losses</div>
+              <small class="opacity-75">Dynamic Sankey Flow</small>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Main Content Area -->
+      <div class="col-md-9 content-area">
+        
+        <!-- Before Optimization Section -->
+        <div id="section-before" class="content-section">
+          <h2 class="section-title">
+            <i class="bi bi-play-circle me-2"></i>
+            Energy Balance Before Optimization
+          </h2>
+          
+          <!-- Chart Container -->
+          <div class="chart-container">
+            <canvas id="beforeChart"></canvas>
+          </div>
+          
+          <!-- Summary Cards -->
+          <div class="row">
+            <div class="col-md-6">
+              <div class="metric-summary">
+                <h4>{{ data.sources_before|floatformat:0 }}</h4>
+                <p><i class="bi bi-lightning-charge me-1"></i>Total Sources (GWh)</p>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="metric-summary">
+                <h4>{{ data.sinks_before|floatformat:0 }}</h4>
+                <p><i class="bi bi-arrow-down-circle me-1"></i>Total Sinks (GWh)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- After Optimization Section -->
+        <div id="section-after" class="content-section" style="display: none;">
+          <h2 class="section-title">
+            <i class="bi bi-check-circle me-2"></i>
+            Energy Balance After Optimization
+          </h2>
+          
+          <!-- Chart Container -->
+          <div class="chart-container">
+            <canvas id="afterChart"></canvas>
+          </div>
+          
+          <!-- Summary Cards -->
+          <div class="row">
+            <div class="col-md-4">
+              <div class="metric-summary">
+                <h4>{{ data.sources_after|floatformat:0 }}</h4>
+                <p><i class="bi bi-lightning-charge me-1"></i>Usable Sources (GWh)</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="metric-summary">
+                <h4>{{ data.sinks_after|floatformat:0 }}</h4>
+                <p><i class="bi bi-arrow-down-circle me-1"></i>Total Sinks (GWh)</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="metric-summary" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);">
+                <h4>{{ data.losses|floatformat:0 }}</h4>
+                <p><i class="bi bi-exclamation-triangle me-1"></i>Conversion Losses (GWh)</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Verification Card -->
+          <div class="result-card mt-4">
+            <h5 class="text-primary mb-3">
+              <i class="bi bi-shield-check me-2"></i>
+              Energy Balance Verification
+            </h5>
+            
+            <div class="p-3 bg-light rounded">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span><strong>Raw Sources - Losses:</strong></span>
+                <span class="fw-bold">{{ data.sources_after_raw|floatformat:2 }} - {{ data.losses|floatformat:2 }} = {{ data.sources_after|floatformat:2 }} GWh</span>
+              </div>
+              
+              <div class="d-flex justify-content-between align-items-center">
+                <span><strong>This equals Sinks:</strong></span>
+                <span class="verification-badge">
+                  {{ data.sinks_after|floatformat:2 }} GWh 
+                  {% if data.verification_correct %}<i class="bi bi-check-lg ms-1"></i>{% else %}<i class="bi bi-x-lg ms-1"></i>{% endif %}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Detailed Breakdown Section -->
+        <div id="section-detailed" class="content-section" style="display: none;">
+          <h2 class="section-title">
+            <i class="bi bi-list-ul me-2"></i>
+            Detailed Component Breakdown
+          </h2>
+          
+          <!-- Sources Before and After -->
+          <div class="row">
+            <div class="col-md-6">
+              <div class="result-card">
+                <h5 class="text-success mb-3">
+                  <i class="bi bi-lightning-charge me-2"></i>
+                  Sources (Before Optimization)
+                </h5>
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Component</th>
+                        <th class="text-end">Energy (GWh)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for source, value in data.detailed_sources_before.items %}
+                      <tr>
+                        <td class="fw-medium">{{ source|cut:"Src_"|title }}</td>
+                        <td class="text-end">{{ value|floatformat:2 }}</td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                    <tfoot class="table-warning">
+                      <tr class="fw-bold">
+                        <td>Total Sources</td>
+                        <td class="text-end">{{ data.sources_before|floatformat:2 }}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="result-card">
+                <h5 class="text-success mb-3">
+                  <i class="bi bi-lightning-charge me-2"></i>
+                  Sources (After Optimization)
+                </h5>
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Component</th>
+                        <th class="text-end">Used (GWh)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for source, value in data.detailed_sources_after.items %}
+                      <tr>
+                        <td class="fw-medium">{{ source|cut:"Src_"|title }}</td>
+                        <td class="text-end">{{ value|floatformat:2 }}</td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                    <tfoot class="table-success">
+                      <tr class="fw-bold">
+                        <td>Total Used</td>
+                        <td class="text-end">{{ data.sources_after_raw|floatformat:2 }}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Sinks Before and After -->
+          <div class="row mt-4">
+            <div class="col-md-6">
+              <div class="result-card">
+                <h5 class="text-info mb-3">
+                  <i class="bi bi-arrow-down-circle me-2"></i>
+                  Sinks (Before Optimization)
+                </h5>
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Component</th>
+                        <th class="text-end">Demand (GWh)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for sink, value in data.detailed_sinks_before.items %}
+                      <tr>
+                        <td class="fw-medium">{{ sink|cut:"Snk_"|title }}</td>
+                        <td class="text-end">{{ value|floatformat:2 }}</td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                    <tfoot class="table-primary">
+                      <tr class="fw-bold">
+                        <td>Total Demand</td>
+                        <td class="text-end">{{ data.sinks_before|floatformat:2 }}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="result-card">
+                <h5 class="text-info mb-3">
+                  <i class="bi bi-arrow-down-circle me-2"></i>
+                  Sinks (After Optimization)
+                </h5>
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Component</th>
+                        <th class="text-end">Demand (GWh)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for sink, value in data.detailed_sinks_after.items %}
+                      <tr>
+                        <td class="fw-medium">{{ sink|cut:"Snk_"|title }}</td>
+                        <td class="text-end">{{ value|floatformat:2 }}</td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                    <tfoot class="table-info">
+                      <tr class="fw-bold">
+                        <td>Total Satisfied</td>
+                        <td class="text-end">{{ data.sinks_after|floatformat:2 }}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Energy Conversion Losses Section -->
+        <div id="section-losses" class="content-section" style="display: none;">
+          <h2 class="section-title">
+            <i class="bi bi-diagram-2 me-2"></i>
+            Energy Conversion Losses Analysis
+          </h2>
+          
+          <!-- Loss Summary Cards -->
+          <div class="row mb-4">
+            <div class="col-md-4">
+              <div class="result-card text-center">
+                <h5 class="text-primary">Total Sources</h5>
+                <h3 class="text-primary">{{ data.loss_breakdown.total_sources|floatformat:2 }} GWh</h3>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="result-card text-center">
+                <h5 class="text-success">Final Useful Output</h5>
+                <h3 class="text-success">{{ data.loss_breakdown.summary.final_useful_demand|floatformat:2 }} GWh</h3>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="result-card text-center">
+                <h5 class="text-danger">Total Losses</h5>
+                <h3 class="text-danger">{{ data.loss_breakdown.summary.total_calculated_losses|floatformat:2 }} GWh</h3>
+              </div>
+            </div>
+          </div>
+
+          <div class="result-card">
+            <h5 class="mb-4">
+              <i class="bi bi-diagram-3 me-2"></i>
+              Dynamic Energy Conversion Flow Diagram
+            </h5>
+            <div id="sankeyChart" style="width: 100%; height: 700px; border-radius: 10px;"></div>
+            
+            <!-- Legend and Efficiency Info -->
+            <div class="row mt-3">
+              <div class="col-md-6">
+                <h6 class="text-muted">Flow Components:</h6>
+                <div class="d-flex flex-wrap gap-3">
+                  <div class="d-flex align-items-center">
+                    <div style="width: 20px; height: 4px; background: #2ecc71; margin-right: 8px;"></div>
+                    <small>Useful Energy Output</small>
+                  </div>
+                  <div class="d-flex align-items-center">
+                    <div style="width: 20px; height: 4px; background: #e74c3c; margin-right: 8px;"></div>
+                    <small>Conversion Losses</small>
+                  </div>
+                  <div class="d-flex align-items-center">
+                    <div style="width: 20px; height: 4px; background: #3498db; margin-right: 8px;"></div>
+                    <small>Process Flows</small>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <h6 class="text-muted">System Efficiency:</h6>
+                <div class="progress" style="height: 25px;">
+                  <div class="progress-bar bg-success" role="progressbar" style="width: {{ data.loss_breakdown.summary.overall_efficiency|floatformat:1 }}%">
+                    {{ data.loss_breakdown.summary.overall_efficiency|floatformat:1 }}% Efficiency
+                  </div>
+                  <div class="progress-bar bg-danger" role="progressbar" style="width: {{ data.loss_breakdown.summary.loss_percentage|floatformat:1 }}%">
+                    {{ data.loss_breakdown.summary.loss_percentage|floatformat:1 }}% Losses
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Detailed Process Table -->
+          <div class="result-card mt-4">
+            <h5 class="mb-4">
+              <i class="bi bi-table me-2"></i>
+              Detailed Conversion Process Breakdown
+            </h5>
+            <div class="table-responsive">
+              <table class="table table-striped">
+                <thead class="table-dark">
+                  <tr>
+                    <th>Process</th>
+                    <th>Input (GWh)</th>
+                    <th>Useful Output (GWh)</th>
+                    <th>Losses (GWh)</th>
+                    <th>Efficiency (%)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Power-to-Hydrogen</strong></td>
+                    <td><span class="format-number">{{ data.loss_breakdown.power_to_hydrogen.input|floatformat:2 }}</span></td>
+                    <td><span class="format-number">{{ data.loss_breakdown.power_to_hydrogen.useful_output|floatformat:2 }}</span></td>
+                    <td class="text-danger"><span class="format-number">{{ data.loss_breakdown.power_to_hydrogen.total_losses|floatformat:2 }}</span></td>
+                    <td>{{ data.loss_breakdown.power_to_hydrogen.efficiency|floatformat:1 }}%</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Synthetic Fuels</strong></td>
+                    <td><span class="format-number">{{ data.loss_breakdown.synthetic_fuels.input|floatformat:2 }}</span></td>
+                    <td><span class="format-number">{{ data.loss_breakdown.synthetic_fuels.useful_output|floatformat:2 }}</span></td>
+                    <td class="text-danger"><span class="format-number">{{ data.loss_breakdown.synthetic_fuels.total_losses|floatformat:2 }}</span></td>
+                    <td>{{ data.loss_breakdown.synthetic_fuels.efficiency|floatformat:1 }}%</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Industrial Synthesis</strong></td>
+                    <td><span class="format-number">{{ data.loss_breakdown.industrial_synthesis.input|floatformat:2 }}</span></td>
+                    <td><span class="format-number">{{ data.loss_breakdown.industrial_synthesis.useful_output|floatformat:2 }}</span></td>
+                    <td class="text-danger"><span class="format-number">{{ data.loss_breakdown.industrial_synthesis.total_losses|floatformat:2 }}</span></td>
+                    <td>{{ data.loss_breakdown.industrial_synthesis.efficiency|floatformat:1 }}%</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Electricity Grid</strong></td>
+                    <td><span class="format-number">{{ data.loss_breakdown.electricity_grid.input|floatformat:2 }}</span></td>
+                    <td><span class="format-number">{{ data.loss_breakdown.electricity_grid.useful_output|floatformat:2 }}</span></td>
+                    <td class="text-danger"><span class="format-number">{{ data.loss_breakdown.electricity_grid.total_losses|floatformat:2 }}</span></td>
+                    <td>{{ data.loss_breakdown.electricity_grid.efficiency|floatformat:1 }}%</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Transport Conversions</strong></td>
+                    <td><span class="format-number">{{ data.loss_breakdown.transport_conversions.input|floatformat:2 }}</span></td>
+                    <td><span class="format-number">{{ data.loss_breakdown.transport_conversions.useful_output|floatformat:2 }}</span></td>
+                    <td class="text-danger"><span class="format-number">{{ data.loss_breakdown.transport_conversions.total_losses|floatformat:2 }}</span></td>
+                    <td>{{ data.loss_breakdown.transport_conversions.efficiency|floatformat:1 }}%</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Biomass Combustion</strong></td>
+                    <td><span class="format-number">{{ data.loss_breakdown.biomass_combustion.input|floatformat:2 }}</span></td>
+                    <td><span class="format-number">{{ data.loss_breakdown.biomass_combustion.useful_output|floatformat:2 }}</span></td>
+                    <td class="text-danger"><span class="format-number">{{ data.loss_breakdown.biomass_combustion.total_losses|floatformat:2 }}</span></td>
+                    <td>{{ data.loss_breakdown.biomass_combustion.efficiency|floatformat:1 }}%</td>
+                  </tr>
+                </tbody>
+                <tfoot class="table-secondary">
+                  <tr>
+                    <th>TOTAL SYSTEM</th>
+                    <th><span class="format-number">{{ data.loss_breakdown.total_sources|floatformat:2 }}</span></th>
+                    <th><span class="format-number">{{ data.loss_breakdown.summary.final_useful_demand|floatformat:2 }}</span></th>
+                    <th class="text-danger"><span class="format-number">{{ data.loss_breakdown.summary.total_calculated_losses|floatformat:2 }}</span></th>
+                    <th>{{ data.loss_breakdown.summary.overall_efficiency|floatformat:1 }}%</th>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script>
+    // Number formatting function (English format: 2,262,712.90)
+    function formatNumber(num) {
+      return parseFloat(num).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    // Format all numbers on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      // Format summary cards
+      document.getElementById('totalSources').textContent = formatNumber(document.getElementById('totalSources').textContent);
+      document.getElementById('finalDemand').textContent = formatNumber(document.getElementById('finalDemand').textContent);
+      document.getElementById('totalLosses').textContent = formatNumber(document.getElementById('totalLosses').textContent);
+      
+      // Format table numbers
+      document.querySelectorAll('.format-number').forEach(function(element) {
+        element.textContent = formatNumber(element.textContent);
+      });
+    });
+
+    // Data from Django backend - properly formatted
+    const backendData = {
+      sources_before: parseFloat("{{ data.sources_before|floatformat:2 }}"),
+      sinks_before: parseFloat("{{ data.sinks_before|floatformat:2 }}"),
+      sources_after: parseFloat("{{ data.sources_after|floatformat:2 }}"),
+      sources_after_raw: parseFloat("{{ data.sources_after_raw|floatformat:2 }}"),
+      sinks_after: parseFloat("{{ data.sinks_after|floatformat:2 }}"),
+      losses: parseFloat("{{ data.losses|floatformat:2 }}")
+    };
+
+    console.log("Backend Data:", backendData); // Debug log
+
+    // Chart configurations
+    const chartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return context.parsed.y.toLocaleString() + ' GWh';
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return (value / 1000).toFixed(0) + 'K GWh';
+            }
+          }
+        }
+      }
+    };
+
+    function createBeforeChart() {
+      const ctx = document.getElementById('beforeChart').getContext('2d');
+      beforeChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Total Sources', 'Total Sinks'],
+          datasets: [{
+            data: [backendData.sources_before, backendData.sinks_before],
+            backgroundColor: [
+              'rgba(255, 193, 7, 0.8)',   // Gold for sources
+              'rgba(23, 162, 184, 0.8)'   // Blue for sinks
+            ],
+            borderColor: [
+              'rgba(255, 193, 7, 1)',
+              'rgba(23, 162, 184, 1)'
+            ],
+            borderWidth: 2,
+            borderRadius: 8
+          }]
+        },
+        options: {
+          ...chartOptions,
+          plugins: {
+            ...chartOptions.plugins,
+            title: {
+              display: true,
+              text: 'Energy Balance Before Optimization',
+              font: { size: 16, weight: 'bold' }
+            }
+          }
+        }
+      });
+    }
+
+    function createAfterChart() {
+      const ctx = document.getElementById('afterChart').getContext('2d');
+      afterChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Usable Sources', 'Total Sinks', 'Conversion Losses'],
+          datasets: [{
+            data: [backendData.sources_after, backendData.sinks_after, backendData.losses],
+            backgroundColor: [
+              'rgba(40, 167, 69, 0.8)',   // Green for usable sources
+              'rgba(23, 162, 184, 0.8)',  // Blue for sinks
+              'rgba(255, 107, 107, 0.8)'  // Red for losses
+            ],
+            borderColor: [
+              'rgba(40, 167, 69, 1)',
+              'rgba(23, 162, 184, 1)',
+              'rgba(255, 107, 107, 1)'
+            ],
+            borderWidth: 2,
+            borderRadius: 8
+          }]
+        },
+        options: {
+          ...chartOptions,
+          plugins: {
+            ...chartOptions.plugins,
+            title: {
+              display: true,
+              text: 'Energy Balance After Optimization',
+              font: { size: 16, weight: 'bold' }
+            }
+          }
+        }
+      });
+    }
+
+    // Dynamic Sankey Chart Creation Function
+    function createSankeyChart() {
+      // Get dynamic loss breakdown data from Django backend
+      const lossData = {
+        totalSources: parseFloat('{{ data.loss_breakdown.total_sources }}'),
+        finalDemand: parseFloat('{{ data.loss_breakdown.summary.final_useful_demand }}'),
+        totalLosses: parseFloat('{{ data.loss_breakdown.summary.total_calculated_losses }}'),
+        
+        // Individual process data (input → output calculations)
+        powerToHydrogen: {
+          input: parseFloat('{{ data.loss_breakdown.power_to_hydrogen.input }}'),
+          output: parseFloat('{{ data.loss_breakdown.power_to_hydrogen.useful_output }}'),
+          losses: parseFloat('{{ data.loss_breakdown.power_to_hydrogen.total_losses }}')
+        },
+        syntheticFuels: {
+          input: parseFloat('{{ data.loss_breakdown.synthetic_fuels.input }}'),
+          output: parseFloat('{{ data.loss_breakdown.synthetic_fuels.useful_output }}'),
+          losses: parseFloat('{{ data.loss_breakdown.synthetic_fuels.total_losses }}')
+        },
+        industrialSynthesis: {
+          input: parseFloat('{{ data.loss_breakdown.industrial_synthesis.input }}'),
+          output: parseFloat('{{ data.loss_breakdown.industrial_synthesis.useful_output }}'),
+          losses: parseFloat('{{ data.loss_breakdown.industrial_synthesis.total_losses }}')
+        },
+        electricityGrid: {
+          input: parseFloat('{{ data.loss_breakdown.electricity_grid.input }}'),
+          output: parseFloat('{{ data.loss_breakdown.electricity_grid.useful_output }}'),
+          losses: parseFloat('{{ data.loss_breakdown.electricity_grid.total_losses }}')
+        },
+        transportConversions: {
+          input: parseFloat('{{ data.loss_breakdown.transport_conversions.input }}'),
+          output: parseFloat('{{ data.loss_breakdown.transport_conversions.useful_output }}'),
+          losses: parseFloat('{{ data.loss_breakdown.transport_conversions.total_losses }}')
+        },
+        biomassCombustion: {
+          input: parseFloat('{{ data.loss_breakdown.biomass_combustion.input }}'),
+          output: parseFloat('{{ data.loss_breakdown.biomass_combustion.useful_output }}'),
+          losses: parseFloat('{{ data.loss_breakdown.biomass_combustion.total_losses }}')
+        }
+      };
+
+      // Build dynamic Sankey diagram nodes and links
+      const labels = [
+        `Total Energy Sources<br>${lossData.totalSources.toLocaleString('en-US', {maximumFractionDigits: 2})} GWh`,
+        
+        // Conversion processes
+        `Power-to-H₂<br>Input: ${lossData.powerToHydrogen.input.toLocaleString('en-US', {maximumFractionDigits: 2})} GWh`,
+        `Synthetic Fuels<br>Input: ${lossData.syntheticFuels.input.toLocaleString('en-US', {maximumFractionDigits: 2})} GWh`,
+        `Industrial Synthesis<br>Input: ${lossData.industrialSynthesis.input.toLocaleString('en-US', {maximumFractionDigits: 2})} GWh`,
+        `Electricity Grid<br>Input: ${lossData.electricityGrid.input.toLocaleString('en-US', {maximumFractionDigits: 2})} GWh`,
+        `Transport Systems<br>Input: ${lossData.transportConversions.input.toLocaleString('en-US', {maximumFractionDigits: 2})} GWh`,
+        `Biomass Processing<br>Input: ${lossData.biomassCombustion.input.toLocaleString('en-US', {maximumFractionDigits: 2})} GWh`,
+        
+        // Outputs
+        `P2H₂ Output<br>${lossData.powerToHydrogen.output.toLocaleString('en-US', {maximumFractionDigits: 2})} GWh`,
+        `Fuel Output<br>${lossData.syntheticFuels.output.toLocaleString('en-US', {maximumFractionDigits: 2})} GWh`,
+        `Industrial Output<br>${lossData.industrialSynthesis.output.toLocaleString('en-US', {maximumFractionDigits: 2})} GWh`,
+        `Grid Output<br>${lossData.electricityGrid.output.toLocaleString('en-US', {maximumFractionDigits: 2})} GWh`,
+        `Transport Output<br>${lossData.transportConversions.output.toLocaleString('en-US', {maximumFractionDigits: 2})} GWh`,
+        `Biomass Output<br>${lossData.biomassCombustion.output.toLocaleString('en-US', {maximumFractionDigits: 2})} GWh`,
+        
+        // Final destinations
+        `Final Useful Demand<br>${lossData.finalDemand.toLocaleString('en-US', {maximumFractionDigits: 2})} GWh`,
+        `System Losses<br>${lossData.totalLosses.toLocaleString('en-US', {maximumFractionDigits: 2})} GWh`
+      ];
+
+      // Build links dynamically based on backend data
+      const sources = [
+        // From Total Sources to conversion processes
+        0, 0, 0, 0, 0, 0,
+        // From processes to their outputs
+        1, 2, 3, 4, 5, 6,
+        // From processes to losses
+        1, 2, 3, 4, 5, 6,
+        // From outputs to final demand
+        7, 8, 9, 10, 11, 12
+      ];
+
+      const targets = [
+        // To conversion processes
+        1, 2, 3, 4, 5, 6,
+        // To process outputs
+        7, 8, 9, 10, 11, 12,
+        // To losses node
+        14, 14, 14, 14, 14, 14,
+        // To final demand
+        13, 13, 13, 13, 13, 13
+      ];
+
+      const values = [
+        // Input flows to processes
+        lossData.powerToHydrogen.input,
+        lossData.syntheticFuels.input,
+        lossData.industrialSynthesis.input,
+        lossData.electricityGrid.input,
+        lossData.transportConversions.input,
+        lossData.biomassCombustion.input,
+        // Process outputs
+        lossData.powerToHydrogen.output,
+        lossData.syntheticFuels.output,
+        lossData.industrialSynthesis.output,
+        lossData.electricityGrid.output,
+        lossData.transportConversions.output,
+        lossData.biomassCombustion.output,
+        // Losses
+        lossData.powerToHydrogen.losses,
+        lossData.syntheticFuels.losses,
+        lossData.industrialSynthesis.losses,
+        lossData.electricityGrid.losses,
+        lossData.transportConversions.losses,
+        lossData.biomassCombustion.losses,
+        // Final useful flows
+        lossData.powerToHydrogen.output,
+        lossData.syntheticFuels.output,
+        lossData.industrialSynthesis.output,
+        lossData.electricityGrid.output,
+        lossData.transportConversions.output,
+        lossData.biomassCombustion.output
+      ];
+
+      // Create the dynamic Sankey diagram
+      const data = [{
+        type: "sankey",
+        orientation: "h",
+        arrangement: "snap",
+        node: {
+          pad: 15,
+          thickness: 20,
+          line: { color: "black", width: 1 },
+          label: labels,
+          color: [
+            "#667eea",     // Total Sources
+            // Process inputs (blue gradient)
+            "#3498db", "#9c27b0", "#ff9800", "#4caf50", "#e91e63", "#00bcd4",
+            // Process outputs (green gradient)
+            "#27ae60", "#27ae60", "#27ae60", "#27ae60", "#27ae60", "#27ae60",
+            // Final destinations
+            "#2ecc71",     // Final Demand
+            "#e74c3c"      // Total Losses
+          ],
+          hovertemplate: '<b>%{label}</b><br>Energy Flow Analysis<extra></extra>'
+        },
+        link: {
+          source: sources,
+          target: targets,
+          value: values,
+          color: [
+            // Input flows (blue tones)
+            'rgba(52, 152, 219, 0.6)', 'rgba(156, 39, 176, 0.6)', 'rgba(255, 152, 0, 0.6)',
+            'rgba(76, 175, 80, 0.6)', 'rgba(233, 30, 99, 0.6)', 'rgba(0, 188, 212, 0.6)',
+            // Useful output flows (green tones)
+            'rgba(46, 204, 113, 0.7)', 'rgba(46, 204, 113, 0.7)', 'rgba(46, 204, 113, 0.7)',
+            'rgba(46, 204, 113, 0.7)', 'rgba(46, 204, 113, 0.7)', 'rgba(46, 204, 113, 0.7)',
+            // Loss flows (red tones)
+            'rgba(231, 76, 60, 0.8)', 'rgba(231, 76, 60, 0.8)', 'rgba(231, 76, 60, 0.8)',
+            'rgba(231, 76, 60, 0.8)', 'rgba(231, 76, 60, 0.8)', 'rgba(231, 76, 60, 0.8)',
+            // Final demand flows (bright green)
+            'rgba(39, 174, 96, 0.8)', 'rgba(39, 174, 96, 0.8)', 'rgba(39, 174, 96, 0.8)',
+            'rgba(39, 174, 96, 0.8)', 'rgba(39, 174, 96, 0.8)', 'rgba(39, 174, 96, 0.8)'
+          ],
+          hovertemplate: '<b>%{source.label}</b> → <b>%{target.label}</b><br>Flow: %{value:,.2f} GWh<br>Process Efficiency Analysis<extra></extra>'
+        }
+      }];
+
+      const config = {
+        displayModeBar: true,
+        displaylogo: false,
+        modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d', 'autoScale2d'],
+        responsive: true,
+        toImageButtonOptions: {
+          format: 'png',
+          filename: 'energy_conversion_flow',
+          height: 700,
+          width: 1200,
+          scale: 1
+        }
+      };
+
+      // Render the dynamic Sankey chart
+      Plotly.newPlot('sankeyChart', data, {}, config);
+      
+      console.log('Dynamic Sankey chart created with backend data:', lossData);
+    }
+
+    let beforeChart, afterChart, sankeyChart;
+
+    function showSection(sectionId) {
+      // Hide all sections
+      document.querySelectorAll('.content-section').forEach(section => {
+        section.style.display = 'none';
+      });
+      
+      // Remove active class from all nav items
+      document.querySelectorAll('.sidebar-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      
+      // Show selected section
+      document.getElementById('section-' + sectionId).style.display = 'block';
+      
+      // Add active class to selected nav item
+      document.getElementById('nav-' + sectionId).classList.add('active');
+
+      // Create charts when sections become visible
+      if (sectionId === 'before' && !beforeChart) {
+        setTimeout(createBeforeChart, 100);
+      } else if (sectionId === 'after' && !afterChart) {
+        setTimeout(createAfterChart, 100);
+      } else if (sectionId === 'losses' && !sankeyChart) {
+        setTimeout(createSankeyChart, 100);
+        sankeyChart = true;
+      }
+      // No additional charts needed for 'flow' and 'detailed' sections
+    }
+
+    // Initialize first chart when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(createBeforeChart, 100);
+    });
+  </script>
+</body>
+</html>

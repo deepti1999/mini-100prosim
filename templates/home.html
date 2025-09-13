@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini-100ProSim - Energy System Optimization</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    .main-container {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+    }
+    
+    .header-section {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 60px 40px;
+      text-align: center;
+      position: relative;
+    }
+    
+    .header-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)" /></svg>');
+      opacity: 0.3;
+    }
+    
+    .header-content {
+      position: relative;
+      z-index: 2;
+    }
+    
+    .main-title {
+      font-size: 3.5rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .subtitle {
+      font-size: 1.3rem;
+      opacity: 0.9;
+      margin-bottom: 30px;
+      font-weight: 300;
+    }
+    
+    .feature-badges {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    
+    .feature-badge {
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 25px;
+      padding: 8px 20px;
+      font-size: 0.9rem;
+      backdrop-filter: blur(5px);
+    }
+    
+    .form-section {
+      padding: 60px 40px;
+    }
+    
+    .form-card {
+      background: white;
+      border-radius: 15px;
+      padding: 40px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      border: none;
+    }
+    
+    .form-title {
+      color: #2c3e50;
+      font-size: 2rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    
+    .form-subtitle {
+      color: #7f8c8d;
+      text-align: center;
+      margin-bottom: 40px;
+      font-size: 1.1rem;
+    }
+    
+    .form-group {
+      margin-bottom: 25px;
+    }
+    
+    .form-label {
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .form-control {
+      border: 2px solid #e8ecef;
+      border-radius: 10px;
+      padding: 15px 20px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .btn-run {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      border-radius: 10px;
+      padding: 15px 40px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: white;
+      width: 100%;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .btn-run:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+      color: white;
+    }
+    
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 25px;
+      margin-top: 40px;
+    }
+    
+    .feature-item {
+      text-align: center;
+      padding: 20px;
+      border-radius: 10px;
+      background: rgba(102, 126, 234, 0.05);
+      border: 1px solid rgba(102, 126, 234, 0.1);
+      transition: all 0.3s ease;
+    }
+    
+    .feature-item:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    
+    .feature-icon {
+      font-size: 2.5rem;
+      color: #667eea;
+      margin-bottom: 15px;
+    }
+    
+    .feature-title {
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 8px;
+    }
+    
+    .feature-desc {
+      color: #7f8c8d;
+      font-size: 0.9rem;
+    }
+    
+    .stats-row {
+      margin-top: 30px;
+      text-align: center;
+    }
+    
+    .stat-item {
+      padding: 15px;
+    }
+    
+    .stat-number {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #667eea;
+      display: block;
+    }
+    
+    .stat-label {
+      color: #7f8c8d;
+      font-size: 0.9rem;
+      margin-top: 5px;
+    }
+    
+    @media (max-width: 768px) {
+      .main-title {
+        font-size: 2.5rem;
+      }
+      
+      .header-section,
+      .form-section {
+        padding: 40px 20px;
+      }
+      
+      .form-card {
+        padding: 30px 20px;
+      }
+      
+      .feature-badges {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container-fluid">
+    <div class="row justify-content-center">
+      <div class="col-xl-10 col-lg-11">
+        <div class="main-container">
+          
+          <!-- Header Section -->
+          <div class="header-section">
+            <div class="header-content">
+              <div class="main-title">
+                <i class="bi bi-lightning-charge me-3"></i>
+                Mini-100ProSim
+              </div>
+              <div class="subtitle">
+                Advanced Energy System Optimization & Analysis Platform
+              </div>
+              <div class="feature-badges">
+                <span class="feature-badge">
+                  <i class="bi bi-cpu me-2"></i>OEMOF Powered
+                </span>
+                <span class="feature-badge">
+                  <i class="bi bi-diagram-2 me-2"></i>Sankey Visualization
+                </span>
+                <span class="feature-badge">
+                  <i class="bi bi-shield-check me-2"></i>CBC Optimization
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Form Section -->
+          <div class="form-section">
+            <div class="form-card">
+              <h2 class="form-title">
+                <i class="bi bi-gear-fill me-2"></i>
+                Configure Your Energy Scenario
+              </h2>
+              <p class="form-subtitle">
+                Set up your optimization parameters and explore comprehensive energy system results
+              </p>
+              
+              <form action="/results/" method="get">
+                <div class="form-group">
+                  <label class="form-label">
+                    <i class="bi bi-geo-alt-fill"></i>
+                    Analysis Region
+                  </label>
+                  <select name="region" class="form-control" required>
+                    <option value="">Select your region...</option>
+                    <option value="Germany" selected>Germany</option>
+                    <option value="India">India</option>
+                    <option value="Europe">Europe</option>
+                    <option value="Custom">Custom Region</option>
+                  </select>
+                  <small class="form-text text-muted mt-2">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Choose the geographical region for your energy system analysis
+                  </small>
+                </div>
+                
+                <button type="submit" class="btn btn-run">
+                  <i class="bi bi-play-circle-fill me-2"></i>
+                  Run Optimization & Explore Results
+                  <i class="bi bi-arrow-right ms-2"></i>
+                </button>
+              </form>
+              
+              <!-- Features Grid -->
+              <div class="features-grid">
+                <div class="feature-item">
+                  <div class="feature-icon">
+                    <i class="bi bi-bar-chart-fill"></i>
+                  </div>
+                  <div class="feature-title">Dynamic Charts</div>
+                  <div class="feature-desc">Interactive Chart.js visualizations</div>
+                </div>
+                
+                <div class="feature-item">
+                  <div class="feature-icon">
+                    <i class="bi bi-table"></i>
+                  </div>
+                  <div class="feature-title">Detailed Analysis</div>
+                  <div class="feature-desc">Component-wise breakdown tables</div>
+                </div>
+                
+                <div class="feature-item">
+                  <div class="feature-icon">
+                    <i class="bi bi-diagram-3-fill"></i>
+                  </div>
+                  <div class="feature-title">Sankey Flows</div>
+                  <div class="feature-desc">Energy conversion loss visualization</div>
+                </div>
+              </div>
+              
+              <!-- Stats Row -->
+              <div class="row stats-row">
+                <div class="col-md-3 stat-item">
+                  <span class="stat-number">6</span>
+                  <div class="stat-label">Conversion Processes</div>
+                </div>
+                <div class="col-md-3 stat-item">
+                  <span class="stat-number">4</span>
+                  <div class="stat-label">Analysis Sections</div>
+                </div>
+                <div class="col-md-3 stat-item">
+                  <span class="stat-number">100%</span>
+                  <div class="stat-label">Dynamic Data</div>
+                </div>
+                <div class="col-md-3 stat-item">
+                  <span class="stat-number">CBC</span>
+                  <div class="stat-label">Solver Engine</div>
+                </div>
+              </div>
+              
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Add smooth animations
+    document.addEventListener('DOMContentLoaded', function() {
+      // Animate form elements on load
+      const formElements = document.querySelectorAll('.form-group');
+      formElements.forEach((element, index) => {
+        element.style.opacity = '0';
+        element.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+          element.style.transition = 'all 0.6s ease';
+          element.style.opacity = '1';
+          element.style.transform = 'translateY(0)';
+        }, index * 100);
+      });
+      
+      // Animate feature items
+      const featureItems = document.querySelectorAll('.feature-item');
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry, index) => {
+          if (entry.isIntersecting) {
+            setTimeout(() => {
+              entry.target.style.animation = 'fadeInUp 0.6s ease forwards';
+            }, index * 100);
+          }
+        });
+      });
+      
+      featureItems.forEach(item => {
+        item.style.opacity = '0';
+        item.style.transform = 'translateY(30px)';
+        observer.observe(item);
+      });
+      
+      // Form validation feedback
+      const form = document.querySelector('form');
+      form.addEventListener('submit', function(e) {
+        const submitBtn = form.querySelector('.btn-run');
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Initializing Optimization...';
+        submitBtn.disabled = true;
+      });
+    });
+    
+    // Add CSS animations
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes fadeInUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
+</body>
+</html>
