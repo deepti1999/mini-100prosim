@@ -31,26 +31,64 @@ def run_oemof_scenario():
 
     # Solve model using best available solver for Heroku deployment
     import os
-    is_heroku = 'DYNO' in os.environ  # Heroku sets this environment variable
+    from pyomo.opt import SolverFactory
     
+    is_heroku = 'DYNO' in os.environ  # Heroku sets this environment variable
+    print(f"Environment detection - Is Heroku: {is_heroku}")
+    
+    solver_used = None
     try:
         if is_heroku:
-            # On Heroku, try solvers that don't need system executables
+            print("Heroku detected - using HiGHS solver")
+            # On Heroku, use solvers that don't need system executables
             try:
-                model.solve(solver="appsi_highs")  # HiGHS via appsi interface
-            except:
-                model.solve(solver="glpk")  # GLPK fallback
+                # Try HiGHS first (best option for Heroku)
+                solver = SolverFactory('appsi_highs')
+                if solver.available():
+                    print("Using appsi_highs solver")
+                    model.solve(solver="appsi_highs")
+                    solver_used = "appsi_highs"
+                else:
+                    raise Exception("appsi_highs not available")
+            except Exception as e1:
+                print(f"appsi_highs failed: {e1}")
+                try:
+                    # Fallback to GLPK
+                    solver = SolverFactory('glpk')
+                    if solver.available():
+                        print("Using glpk solver")
+                        model.solve(solver="glpk")
+                        solver_used = "glpk"
+                    else:
+                        raise Exception("glpk not available")
+                except Exception as e2:
+                    print(f"glpk failed: {e2}")
+                    # Final fallback - force use of HiGHS even if not detected as available
+                    print("Forcing HiGHS solver on Heroku")
+                    model.solve(solver="appsi_highs")
+                    solver_used = "appsi_highs (forced)"
         else:
+            print("Local environment detected - using CBC solver")
             # Local development - prefer CBC if available
-            model.solve(solver="cbc")
+            try:
+                solver = SolverFactory('cbc')
+                if solver.available():
+                    model.solve(solver="cbc")
+                    solver_used = "cbc"
+                else:
+                    print("CBC not available locally, trying alternatives")
+                    model.solve(solver="appsi_highs")
+                    solver_used = "appsi_highs (local fallback)"
+            except Exception as e:
+                print(f"Local CBC failed: {e}")
+                model.solve(solver="appsi_highs") 
+                solver_used = "appsi_highs (local fallback)"
+                
+        print(f"Optimization completed successfully using solver: {solver_used}")
+        
     except Exception as e:
-        print(f"Primary solver failed: {e}")
-        # Final fallback to any available solver
-        try:
-            model.solve()  # Let OEMOF choose the best available solver
-        except Exception as e2:
-            print(f"All solvers failed: {e2}")
-            raise Exception("No suitable solver found for optimization")
+        print(f"All solver attempts failed: {e}")
+        raise Exception(f"No suitable solver found for optimization: {e}")
 
     # Get results
     results = processing.results(model)
