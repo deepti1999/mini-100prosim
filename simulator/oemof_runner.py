@@ -30,7 +30,6 @@ def run_oemof_scenario():
             total_sinks_before += value.value
 
     # Solve model using best available solver for Heroku deployment
-    import os
     from pyomo.opt import SolverFactory
     
     is_heroku = 'DYNO' in os.environ  # Heroku sets this environment variable
