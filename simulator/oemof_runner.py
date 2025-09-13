@@ -39,49 +39,41 @@ def run_oemof_scenario():
     solver_used = None
     try:
         if is_heroku:
-            print("Heroku detected - using HiGHS solver")
-            # On Heroku, use solvers that don't need system executables
+            print("Heroku detected - using PuLP solver")
+            # On Heroku, use PuLP which is pure Python and works reliably
             try:
-                # Try HiGHS first (best option for Heroku)
-                solver = SolverFactory('appsi_highs')
-                if solver.available():
-                    print("Using appsi_highs solver")
-                    model.solve(solver="appsi_highs")
-                    solver_used = "appsi_highs"
-                else:
-                    raise Exception("appsi_highs not available")
+                # Try PuLP first (most reliable on Heroku)
+                print("Attempting PuLP solver")
+                model.solve(solver="appsi_opt", tee=True)  # PuLP via appsi interface
+                solver_used = "appsi_opt (PuLP)"
             except Exception as e1:
-                print(f"appsi_highs failed: {e1}")
+                print(f"PuLP failed: {e1}")
                 try:
-                    # Fallback to GLPK
-                    solver = SolverFactory('glpk')
-                    if solver.available():
-                        print("Using glpk solver")
-                        model.solve(solver="glpk")
-                        solver_used = "glpk"
-                    else:
-                        raise Exception("glpk not available")
+                    # Fallback to HiGHS
+                    print("Attempting HiGHS solver")
+                    model.solve(solver="appsi_highs", tee=True)
+                    solver_used = "appsi_highs"
                 except Exception as e2:
-                    print(f"glpk failed: {e2}")
-                    # Final fallback - force use of HiGHS even if not detected as available
-                    print("Forcing HiGHS solver on Heroku")
-                    model.solve(solver="appsi_highs")
-                    solver_used = "appsi_highs (forced)"
+                    print(f"HiGHS failed: {e2}")
+                    # Final fallback - force use of any available solver
+                    print("Using any available solver")
+                    model.solve(tee=True)
+                    solver_used = "default available solver"
         else:
             print("Local environment detected - using CBC solver")
             # Local development - prefer CBC if available
             try:
                 solver = SolverFactory('cbc')
                 if solver.available():
-                    model.solve(solver="cbc")
+                    model.solve(solver="cbc", tee=True)
                     solver_used = "cbc"
                 else:
                     print("CBC not available locally, trying alternatives")
-                    model.solve(solver="appsi_highs")
+                    model.solve(solver="appsi_highs", tee=True)
                     solver_used = "appsi_highs (local fallback)"
             except Exception as e:
                 print(f"Local CBC failed: {e}")
-                model.solve(solver="appsi_highs") 
+                model.solve(solver="appsi_highs", tee=True) 
                 solver_used = "appsi_highs (local fallback)"
                 
         print(f"Optimization completed successfully using solver: {solver_used}")
